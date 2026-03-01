@@ -38,7 +38,7 @@ class DocumentMetadata(BaseModel):
     filename: str
     file_size: int
     content_type: str
-    chunk_count: int = 0
+    openai_file_id: str = ""
     uploaded_at: datetime = Field(default_factory=datetime.now)
 
 
@@ -47,7 +47,7 @@ class DocumentUploadResponse(BaseModel):
 
     document_id: str
     filename: str
-    chunk_count: int
+    openai_file_id: str
     message: str = "ドキュメントのアップロードと処理が完了しました"
 
 

@@ -10,16 +10,13 @@ class Settings(BaseSettings):
     """環境変数から読み込むアプリケーション設定."""
 
     openai_api_key: str = ""
-    chroma_persist_dir: str = "./data/chroma"
     upload_dir: str = "./data/uploads"
 
-    # RAG設定
-    chunk_size: int = 800
-    chunk_overlap: int = 200
-    retriever_k: int = 8
+    # OpenAI File Search設定
+    vector_store_id: str = ""
+    file_search_max_results: int = 8
 
     # OpenAIモデル設定
-    embedding_model: str = "text-embedding-3-small"
     llm_model: str = "gpt-4o"
 
     # ファイルアップロード制限
@@ -27,13 +24,6 @@ class Settings(BaseSettings):
     allowed_extensions: set[str] = {".pdf", ".docx"}
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
-
-    @property
-    def chroma_persist_path(self) -> Path:
-        """ChromaDB永続化ディレクトリのPathオブジェクト."""
-        path = Path(self.chroma_persist_dir)
-        path.mkdir(parents=True, exist_ok=True)
-        return path
 
     @property
     def upload_path(self) -> Path:

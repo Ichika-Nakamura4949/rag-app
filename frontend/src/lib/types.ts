@@ -26,14 +26,14 @@ export interface DocumentMetadata {
   filename: string;
   file_size: number;
   content_type: string;
-  chunk_count: number;
+  openai_file_id: string;
   uploaded_at: string;
 }
 
 export interface DocumentUploadResponse {
   document_id: string;
   filename: string;
-  chunk_count: number;
+  openai_file_id: string;
   message: string;
 }
 

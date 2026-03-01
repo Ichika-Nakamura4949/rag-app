@@ -34,7 +34,7 @@ export default function DocumentList({
           <tr className="border-b border-gray-200 text-xs font-medium uppercase text-gray-500">
             <th className="px-4 py-3">ファイル名</th>
             <th className="px-4 py-3">サイズ</th>
-            <th className="px-4 py-3">チャンク数</th>
+            <th className="px-4 py-3">ステータス</th>
             <th className="px-4 py-3">アップロード日時</th>
             <th className="px-4 py-3" />
           </tr>
@@ -51,7 +51,9 @@ export default function DocumentList({
               <td className="px-4 py-3 text-gray-600">
                 {formatFileSize(doc.file_size)}
               </td>
-              <td className="px-4 py-3 text-gray-600">{doc.chunk_count}</td>
+              <td className="px-4 py-3 text-gray-600">
+                {doc.openai_file_id ? "処理済み" : "未処理"}
+              </td>
               <td className="px-4 py-3 text-gray-600">
                 {formatDate(doc.uploaded_at)}
               </td>

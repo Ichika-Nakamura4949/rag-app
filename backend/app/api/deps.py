@@ -26,7 +26,7 @@ def get_ingestion_pipeline() -> IngestionPipeline:
 @lru_cache
 def get_rag_chain() -> RAGChain:
     """RAGChainシングルトンを取得."""
-    return RAGChain(get_settings())
+    return RAGChain(get_settings(), get_ingestion_pipeline())
 
 
 # Annotated型エイリアス

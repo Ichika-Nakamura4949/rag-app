@@ -21,7 +21,7 @@ async def upload_document(
     doc_service: DocumentServiceDep,
     ingestion: IngestionDep,
 ) -> DocumentUploadResponse:
-    """ドキュメントをアップロードし、RAGパイプラインで処理."""
+    """ドキュメントをアップロードし、OpenAI File Searchで処理."""
     # ファイル形式バリデーション
     filename = file.filename or ""
     suffix = Path(filename).suffix.lower()
@@ -50,22 +50,22 @@ async def upload_document(
     # ファイル保存
     metadata = await doc_service.save_file(file)
 
-    # Ingestion（テキスト抽出 → チャンク分割 → Embedding → ChromaDB保存）
+    # OpenAI Files API + Vector Storeにアップロード
     file_path = doc_service.get_file_path(metadata.document_id)
     if not file_path:
         raise HTTPException(status_code=500, detail="ファイルの保存に失敗しました")
 
-    chunk_count = ingestion.ingest(
+    openai_file_id = ingestion.ingest(
         file_path=file_path,
         document_id=metadata.document_id,
         filename=metadata.filename,
     )
-    doc_service.update_chunk_count(metadata.document_id, chunk_count)
+    doc_service.update_openai_file_id(metadata.document_id, openai_file_id)
 
     return DocumentUploadResponse(
         document_id=metadata.document_id,
         filename=metadata.filename,
-        chunk_count=chunk_count,
+        openai_file_id=openai_file_id,
     )
 
 
@@ -84,14 +84,15 @@ async def delete_document(
     doc_service: DocumentServiceDep,
     ingestion: IngestionDep,
 ) -> DeleteResponse:
-    """ドキュメントを削除（ファイル + ChromaDB）."""
-    if not doc_service.get_document(document_id):
+    """ドキュメントを削除（ローカルファイル + OpenAI）."""
+    doc = doc_service.get_document(document_id)
+    if not doc:
         raise HTTPException(status_code=404, detail="ドキュメントが見つかりません")
 
-    # ChromaDBからチャンクを削除
-    ingestion.delete_by_document_id(document_id)
+    # OpenAIからファイルを削除
+    ingestion.delete_by_document_id(doc.openai_file_id)
 
-    # ファイルとメタデータを削除
+    # ローカルファイルとメタデータを削除
     doc_service.delete_file(document_id)
 
     return DeleteResponse(

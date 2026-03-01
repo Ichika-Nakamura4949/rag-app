@@ -1,14 +1,14 @@
-"""LangChain RAGチェーン."""
+"""OpenAI Responses API（file_search）によるRAGチェーン."""
 
-from langchain_core.documents import Document
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI
+import logging
+
+from openai import OpenAI
 
 from app.core.config import Settings
-from app.core.rag.retriever import RetrieverFactory
+from app.core.rag.ingestion import IngestionPipeline
 from app.models.schemas import ChatResponse, SourceDocument
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
 あなたは社内ドキュメントに基づいて質問に回答するアシスタントです。
@@ -20,48 +20,22 @@ SYSTEM_PROMPT = """\
 と回答してください。
 - 回答は簡潔かつ正確にしてください。
 - 日本語で回答してください。
-
-コンテキスト:
-{context}
 """
 
 
-def _format_docs(docs: list[Document]) -> str:
-    """検索結果ドキュメントをテキストに変換."""
-    return "\n\n---\n\n".join(doc.page_content for doc in docs)
-
-
 class RAGChain:
-    """RAG質問応答チェーン."""
+    """OpenAI Responses APIを使ったRAG質問応答チェーン."""
 
-    def __init__(self, settings: Settings) -> None:
-        self._retriever_factory = RetrieverFactory(settings)
-        self._llm = ChatOpenAI(
-            model=settings.llm_model,
-            openai_api_key=settings.openai_api_key,
-            temperature=0,
-        )
-        self._prompt = ChatPromptTemplate.from_messages([
-            ("system", SYSTEM_PROMPT),
-            ("human", "{question}"),
-        ])
-
-    def _translate_query(self, question: str) -> str:
-        """検索精度向上のため、質問を英語に翻訳."""
-        translate_prompt = ChatPromptTemplate.from_messages([
-            (
-                "system",
-                "Translate the following user query to English for use as a "
-                "search query against English documents. Output ONLY the "
-                "translated query, nothing else.",
-            ),
-            ("human", "{query}"),
-        ])
-        chain = translate_prompt | self._llm | StrOutputParser()
-        return chain.invoke({"query": question})
+    def __init__(
+        self, settings: Settings, ingestion: IngestionPipeline
+    ) -> None:
+        self._client = OpenAI(api_key=settings.openai_api_key)
+        self._ingestion = ingestion
+        self._model = settings.llm_model
+        self._max_results = settings.file_search_max_results
 
     def invoke(self, question: str) -> ChatResponse:
-        """質問に対してRAGで回答を生成.
+        """質問に対してFile Searchを使い回答を生成.
 
         Args:
             question: ユーザーの質問文
@@ -69,32 +43,59 @@ class RAGChain:
         Returns:
             回答と参照元ドキュメント情報
         """
-        retriever = self._retriever_factory.get_retriever()
+        vector_store_id = self._ingestion.vector_store_id
+        if not vector_store_id:
+            return ChatResponse(
+                answer="ドキュメントがまだアップロードされていません。",
+                source_documents=[],
+            )
 
-        # 検索精度向上のため質問を英語に翻訳して検索
-        search_query = self._translate_query(question)
-        retrieved_docs = retriever.invoke(search_query)
-
-        # LCELチェーン: context + question → prompt → LLM → parser
-        chain = (
-            {
-                "context": lambda _: _format_docs(retrieved_docs),
-                "question": RunnablePassthrough(),
-            }
-            | self._prompt
-            | self._llm
-            | StrOutputParser()
+        response = self._client.responses.create(
+            model=self._model,
+            instructions=SYSTEM_PROMPT,
+            input=question,
+            tools=[
+                {
+                    "type": "file_search",
+                    "vector_store_ids": [vector_store_id],
+                    "max_num_results": self._max_results,
+                }
+            ],
         )
 
-        answer = chain.invoke(question)
+        # レスポンスからテキストとソース情報を抽出
+        answer = response.output_text
 
-        source_documents = [
-            SourceDocument(
-                document_name=doc.metadata.get("filename", "不明"),
-                page_content=doc.page_content[:200],
-                metadata=doc.metadata,
-            )
-            for doc in retrieved_docs
-        ]
+        source_documents = self._extract_sources(response)
 
         return ChatResponse(answer=answer, source_documents=source_documents)
+
+    def _extract_sources(self, response: object) -> list[SourceDocument]:
+        """レスポンスのアノテーションからソースドキュメント情報を抽出."""
+        sources: list[SourceDocument] = []
+        seen_file_ids: set[str] = set()
+
+        for item in response.output:
+            if item.type != "message":
+                continue
+            for content in item.content:
+                if content.type != "output_text":
+                    continue
+                for annotation in getattr(content, "annotations", []):
+                    if annotation.type != "file_citation":
+                        continue
+                    file_id = annotation.file_id
+                    if file_id in seen_file_ids:
+                        continue
+                    seen_file_ids.add(file_id)
+                    sources.append(
+                        SourceDocument(
+                            document_name=getattr(
+                                annotation, "filename", file_id
+                            ),
+                            page_content=f"[File Search citation: {file_id}]",
+                            metadata={"file_id": file_id},
+                        )
+                    )
+
+        return sources

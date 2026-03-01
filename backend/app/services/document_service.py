@@ -51,10 +51,10 @@ class DocumentService:
         self._save_metadata()
         return metadata
 
-    def update_chunk_count(self, document_id: str, chunk_count: int) -> None:
-        """Ingestion後にチャンク数を更新."""
+    def update_openai_file_id(self, document_id: str, openai_file_id: str) -> None:
+        """Ingestion後にOpenAIファイルIDを更新."""
         if document_id in self._metadata:
-            self._metadata[document_id]["chunk_count"] = chunk_count
+            self._metadata[document_id]["openai_file_id"] = openai_file_id
             self._save_metadata()
 
     def list_documents(self) -> list[DocumentMetadata]:
