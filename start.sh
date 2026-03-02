@@ -12,8 +12,8 @@ lsof -ti:$FRONTEND_PORT | xargs kill 2>/dev/null || true
 
 sleep 1
 
-# Next.jsのロックファイルを削除（ブランチ切替時に残ることがある）
-rm -f frontend/.next/dev/lock
+# Next.jsのキャッシュを削除（ブランチ切替時に壊れることがある）
+rm -rf frontend/.next
 
 # --- backend/.env を自動生成 ---
 # OPENAI_API_KEY は既存の .env から引き継ぐ
