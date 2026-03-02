@@ -18,6 +18,7 @@ class SourceDocument(BaseModel):
 
     document_name: str
     page_content: str
+    image_url: str | None = None
     metadata: dict = Field(default_factory=dict)
 
 
@@ -39,6 +40,7 @@ class DocumentMetadata(BaseModel):
     file_size: int
     content_type: str
     chunk_count: int = 0
+    image_count: int = 0
     uploaded_at: datetime = Field(default_factory=datetime.now)
 
 
@@ -48,6 +50,7 @@ class DocumentUploadResponse(BaseModel):
     document_id: str
     filename: str
     chunk_count: int
+    image_count: int = 0
     message: str = "ドキュメントのアップロードと処理が完了しました"
 
 

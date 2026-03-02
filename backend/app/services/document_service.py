@@ -1,6 +1,7 @@
 """ドキュメントファイル管理サービス."""
 
 import json
+import shutil
 import uuid
 from pathlib import Path
 
@@ -14,6 +15,7 @@ class DocumentService:
     """ファイル保存・メタデータ管理."""
 
     def __init__(self, settings: Settings) -> None:
+        self._settings = settings
         self._upload_dir = settings.upload_path
         self._metadata_path = self._upload_dir / "_metadata.json"
         self._metadata: dict[str, dict] = self._load_metadata()
@@ -57,6 +59,12 @@ class DocumentService:
             self._metadata[document_id]["chunk_count"] = chunk_count
             self._save_metadata()
 
+    def update_image_count(self, document_id: str, image_count: int) -> None:
+        """Ingestion後に画像数を更新."""
+        if document_id in self._metadata:
+            self._metadata[document_id]["image_count"] = image_count
+            self._save_metadata()
+
     def list_documents(self) -> list[DocumentMetadata]:
         """全ドキュメントのメタデータ一覧を取得."""
         return [DocumentMetadata(**meta) for meta in self._metadata.values()]
@@ -81,6 +89,11 @@ class DocumentService:
         file_path = self.get_file_path(document_id)
         if file_path and file_path.exists():
             file_path.unlink()
+
+        # 画像ディレクトリも削除
+        image_dir = self._settings.image_path / document_id
+        if image_dir.exists():
+            shutil.rmtree(image_dir)
 
         if document_id in self._metadata:
             del self._metadata[document_id]

@@ -16,6 +16,9 @@ chromadb>=0.5.0
 pymupdf>=1.24.0
 python-docx>=1.1.0
 
+# OpenAI SDK (GPT-4o Vision API for image captioning)
+openai>=1.0.0
+
 # Configuration
 pydantic-settings>=2.0.0
 

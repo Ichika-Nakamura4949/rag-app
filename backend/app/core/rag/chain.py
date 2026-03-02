@@ -88,13 +88,21 @@ class RAGChain:
 
         answer = chain.invoke(question)
 
-        source_documents = [
-            SourceDocument(
-                document_name=doc.metadata.get("filename", "不明"),
-                page_content=doc.page_content[:200],
-                metadata=doc.metadata,
+        source_documents = []
+        for doc in retrieved_docs:
+            image_url = None
+            if doc.metadata.get("type") == "image_caption":
+                image_path = doc.metadata.get("image_path", "")
+                if image_path:
+                    image_url = f"/images/{image_path}"
+
+            source_documents.append(
+                SourceDocument(
+                    document_name=doc.metadata.get("filename", "不明"),
+                    page_content=doc.page_content[:200],
+                    image_url=image_url,
+                    metadata=doc.metadata,
+                )
             )
-            for doc in retrieved_docs
-        ]
 
         return ChatResponse(answer=answer, source_documents=source_documents)

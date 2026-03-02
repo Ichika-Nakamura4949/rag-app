@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     llm_model: str = "gpt-4o"
 
+    # 画像抽出設定
+    image_dir: str = "./data/images"
+    min_image_width: int = 100
+    min_image_height: int = 100
+    caption_model: str = "gpt-4o-mini"
+
+    # CORS設定
+    frontend_url: str = "http://localhost:3002"
+
     # ファイルアップロード制限
     max_file_size: int = 50 * 1024 * 1024  # 50MB
     allowed_extensions: set[str] = {".pdf", ".docx"}
@@ -32,6 +41,13 @@ class Settings(BaseSettings):
     def chroma_persist_path(self) -> Path:
         """ChromaDB永続化ディレクトリのPathオブジェクト."""
         path = Path(self.chroma_persist_dir)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    @property
+    def image_path(self) -> Path:
+        """画像保存ディレクトリのPathオブジェクト."""
+        path = Path(self.image_dir)
         path.mkdir(parents=True, exist_ok=True)
         return path
 

@@ -2,6 +2,7 @@
 export interface SourceDocument {
   document_name: string;
   page_content: string;
+  image_url?: string;
   metadata: Record<string, unknown>;
 }
 
@@ -27,6 +28,7 @@ export interface DocumentMetadata {
   file_size: number;
   content_type: string;
   chunk_count: number;
+  image_count: number;
   uploaded_at: string;
 }
 
@@ -34,6 +36,7 @@ export interface DocumentUploadResponse {
   document_id: string;
   filename: string;
   chunk_count: number;
+  image_count: number;
   message: string;
 }
 

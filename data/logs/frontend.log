@@ -1,0 +1,20 @@
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3032
+- Network:       http://192.168.0.12:3032
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 465ms
+ GET / 200 in 214ms (compile: 158ms, render: 56ms)
+ GET /documents 200 in 43ms (compile: 28ms, render: 15ms)
+ GET /documents 200 in 37ms (compile: 6ms, render: 31ms)
+ GET / 200 in 37ms (compile: 6ms, render: 31ms)
+ GET /documents 200 in 23ms (compile: 5ms, render: 18ms)
+ GET /documents 200 in 51ms (compile: 11ms, render: 40ms)
+ GET / 200 in 28ms (compile: 10ms, render: 19ms)
+ GET /documents 200 in 20ms (compile: 5ms, render: 14ms)
+ GET / 200 in 26ms (compile: 6ms, render: 20ms)
+ GET /documents 200 in 21ms (compile: 3ms, render: 18ms)
+ GET /documents 200 in 51ms (compile: 9ms, render: 42ms)
+ GET / 200 in 16ms (compile: 3ms, render: 13ms)
+[?25h

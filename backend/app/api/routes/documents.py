@@ -55,17 +55,19 @@ async def upload_document(
     if not file_path:
         raise HTTPException(status_code=500, detail="ファイルの保存に失敗しました")
 
-    chunk_count = ingestion.ingest(
+    chunk_count, image_count = ingestion.ingest(
         file_path=file_path,
         document_id=metadata.document_id,
         filename=metadata.filename,
     )
     doc_service.update_chunk_count(metadata.document_id, chunk_count)
+    doc_service.update_image_count(metadata.document_id, image_count)
 
     return DocumentUploadResponse(
         document_id=metadata.document_id,
         filename=metadata.filename,
         chunk_count=chunk_count,
+        image_count=image_count,
     )
 
 
